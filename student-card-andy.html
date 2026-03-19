@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5年甲班 10號 Andy — 文章朗讀練習</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky: #38bdf8;
+    --navy: #0f172a;
+    --teal: #14b8a6;
+    --yellow: #fbbf24;
+    --white: #f8fafc;
+    --card: #1e293b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: var(--navy);
+    font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Animated background blobs */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.25;
+    animation: float 8s ease-in-out infinite;
+  }
+  .blob-1 { width: 400px; height: 400px; background: var(--teal); top: -100px; left: -100px; animation-delay: 0s; }
+  .blob-2 { width: 350px; height: 350px; background: var(--sky); bottom: -80px; right: -80px; animation-delay: 3s; }
+  .blob-3 { width: 200px; height: 200px; background: var(--yellow); top: 50%; left: 50%; animation-delay: 1.5s; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-30px) scale(1.05); }
+  }
+
+  /* Card */
+  .card {
+    position: relative;
+    background: var(--card);
+    border-radius: 28px;
+    padding: 48px 40px 40px;
+    max-width: 380px;
+    width: 90%;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    text-align: center;
+    animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(40px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0)  scale(1); }
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--teal), var(--sky));
+    color: var(--navy);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 99px;
+    margin-bottom: 24px;
+  }
+
+  /* Avatar */
+  .avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--teal) 0%, var(--sky) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 32px rgba(20, 184, 166, 0.4);
+    animation: pulse-ring 2s ease-out infinite;
+  }
+
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(20,184,166,0.5); }
+    70%  { box-shadow: 0 0 0 16px rgba(20,184,166,0); }
+    100% { box-shadow: 0 0 0 0 rgba(20,184,166,0); }
+  }
+
+  /* Name */
+  .name {
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--white);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  /* Info chips */
+  .chips {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin: 16px 0 32px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--white);
+    border-radius: 99px;
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .chip span {
+    color: var(--sky);
+    margin-right: 4px;
+  }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    margin: 0 0 28px;
+  }
+
+  /* CTA Button */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--teal), var(--sky));
+    color: var(--navy);
+    font-size: 16px;
+    font-weight: 900;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 8px 24px rgba(56,189,248,0.35);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(56,189,248,0.5);
+  }
+
+  .btn:active { transform: scale(0.98); }
+
+  .btn-icon { margin-right: 8px; font-size: 18px; }
+
+  /* Countdown */
+  .countdown {
+    margin-top: 20px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.35);
+  }
+
+  #timer { color: var(--yellow); font-weight: 900; }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="card">
+  <div class="badge">🎤 文章朗讀練習</div>
+
+  <div class="avatar">🧑‍🎓</div>
+
+  <div class="name">Andy</div>
+
+  <div class="chips">
+    <div class="chip"><span>🏫</span>5年甲班</div>
+    <div class="chip"><span>#</span>10號</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <a class="btn" href="https://www.jutor.ai/event/speak/passage/index.html" id="goBtn">
+    <span class="btn-icon">🚀</span>開始朗讀練習
+  </a>
+
+  <p class="countdown">即將自動跳轉… <span id="timer">5</span> 秒</p>
+</div>
+
+<script>
+  let t = 5;
+  const el = document.getElementById('timer');
+  const interval = setInterval(() => {
+    t--;
+    el.textContent = t;
+    if (t <= 0) {
+      clearInterval(interval);
+      window.location.href = 'https://www.jutor.ai/event/speak/passage/index.html';
+    }
+  }, 1000);
+
+  // Cancel auto-redirect if user interacts
+  document.getElementById('goBtn').addEventListener('click', () => clearInterval(interval));
+</script>
+</body>
+</html>
