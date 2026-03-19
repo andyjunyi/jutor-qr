@@ -15,6 +15,7 @@
     --green: #4ade80;
     --white: #f8fafc;
     --muted: #94a3b8;
+    --orange: #fb923c;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -158,6 +159,66 @@
     opacity: 0.5; cursor: not-allowed; transform: none;
   }
 
+  /* ── 成績輸入區 ── */
+  .score-box {
+    display: none;
+    margin-top: 16px;
+    background: rgba(251,146,60,0.08);
+    border: 1.5px solid rgba(251,146,60,0.3);
+    border-radius: 16px;
+    padding: 20px 18px;
+    animation: fadeIn 0.35s ease both;
+  }
+  .score-label {
+    font-size: 13px; font-weight: 700;
+    color: var(--orange); margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .score-input-row {
+    display: flex; gap: 10px; align-items: center;
+  }
+  .score-input {
+    flex: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    color: var(--white);
+    font-size: 28px; font-weight: 900;
+    font-family: 'Nunito', 'Noto Sans TC', sans-serif;
+    text-align: center;
+    padding: 12px 8px;
+    outline: none;
+    transition: border 0.2s, box-shadow 0.2s;
+    -moz-appearance: textfield;
+  }
+  .score-input::-webkit-outer-spin-button,
+  .score-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .score-input:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 3px rgba(251,146,60,0.2);
+  }
+  .score-input::placeholder { color: rgba(255,255,255,0.2); font-size: 18px; }
+
+  .btn-submit-score {
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--orange), var(--yellow));
+    color: var(--navy); font-size: 15px; font-weight: 900;
+    border: none; cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(251,146,60,0.35);
+    white-space: nowrap;
+  }
+  .btn-submit-score:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(251,146,60,0.45); }
+  .btn-submit-score:active { transform: scale(0.97); }
+  .btn-submit-score:disabled { opacity:0.5;cursor:not-allowed;transform:none; }
+
+  .score-hint {
+    font-size: 11px; color: var(--muted);
+    margin-top: 8px; text-align: center;
+  }
+
   /* Countdown */
   .countdown {
     margin-top: 18px;
@@ -172,14 +233,25 @@
     background: rgba(74,222,128,0.1);
     border: 1.5px solid rgba(74,222,128,0.35);
     border-radius: 14px;
-    padding: 18px;
+    padding: 20px 18px;
     text-align: center;
     margin-top: 12px;
     animation: fadeIn 0.4s ease both;
   }
-  .success-box .s-icon { font-size: 32px; }
-  .success-box .s-text { color: var(--green); font-weight: 700; font-size: 15px; margin-top: 6px; }
+  .success-box .s-icon { font-size: 36px; }
+  .success-box .s-text { color: var(--green); font-weight: 700; font-size: 16px; margin-top: 8px; }
   .success-box .s-sub  { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .score-badge {
+    display: inline-block;
+    margin-top: 12px;
+    background: linear-gradient(135deg, var(--orange), var(--yellow));
+    color: var(--navy);
+    font-family: 'Nunito','Noto Sans TC',sans-serif;
+    font-size: 32px; font-weight: 900;
+    padding: 6px 22px; border-radius: 99px;
+  }
+  .score-badge-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
   @keyframes fadeIn {
     from { opacity:0; transform: scale(0.95); }
     to   { opacity:1; transform: scale(1); }
@@ -221,11 +293,29 @@
     <div class="divider"></div>
 
     <a class="btn-go" id="go-btn" href="#" target="_blank">🚀 開始朗讀練習</a>
-    <button class="btn-done" id="done-btn" onclick="reportDone()">✅ 我完成了！</button>
+    <button class="btn-done" id="done-btn" onclick="showScoreInput()">✅ 我完成了！</button>
 
+    <!-- 成績輸入區（按完成後出現） -->
+    <div class="score-box" id="score-box">
+      <div class="score-label">🏆 輸入這次的最佳成績</div>
+      <div class="score-input-row">
+        <input
+          type="number" id="score-input"
+          class="score-input" min="0" max="100"
+          placeholder="0–100"
+          inputmode="numeric"
+        />
+        <button class="btn-submit-score" id="submit-btn" onclick="reportDone()">送出 🎯</button>
+      </div>
+      <div class="score-hint">請看 Jutor 畫面上的分數再填寫</div>
+    </div>
+
+    <!-- 完成成功畫面 -->
     <div class="success-box" id="success-box">
       <div class="s-icon">🎉</div>
-      <div class="s-text">太棒了！已回報完成！</div>
+      <div class="s-text">太棒了！紀錄已送出！</div>
+      <div class="score-badge" id="success-score"></div>
+      <div class="score-badge-label">本次最佳成績</div>
       <div class="s-sub" id="success-time"></div>
     </div>
 
@@ -236,14 +326,12 @@
 </div>
 
 <script>
-  // ── Read URL params ──────────────────────────────────────────────
   const params = new URLSearchParams(window.location.search);
   const cls  = params.get('class') || '';
   const num  = params.get('num')   || '';
   const name = params.get('name')  || '';
 
-  // ── Google Apps Script Web App URL ──────────────────────────────
-  // 👇 請將這裡換成你的 Google Apps Script 部署網址
+  // 👇 請換成你的 Google Apps Script 部署網址
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbyeGER899Q6vZFkmTyZKiofesPoTg0nGioGjov0y8raINLH42U6b8IsZRVPVu0krqD6/exec';
 
   if (!cls || !num || !name) {
@@ -257,10 +345,9 @@
     const jutorUrl = 'https://www.jutor.ai/event/speak/passage/index.html';
     document.getElementById('go-btn').href = jutorUrl;
 
-    // Auto countdown
+    // 倒數自動跳轉
     let t = 5;
-    const timerEl = document.getElementById('timer');
-    const goBtn   = document.getElementById('go-btn');
+    const timerEl  = document.getElementById('timer');
     const interval = setInterval(() => {
       t--;
       timerEl.textContent = t;
@@ -271,43 +358,70 @@
       }
     }, 1000);
 
-    goBtn.addEventListener('click', () => {
+    document.getElementById('go-btn').addEventListener('click', () => {
       clearInterval(interval);
       document.getElementById('countdown-wrap').style.display = 'none';
     });
   }
 
-  // ── Report done ──────────────────────────────────────────────────
+  // 按「我完成了」→ 顯示成績輸入框
+  function showScoreInput() {
+    document.getElementById('done-btn').style.display = 'none';
+    const box = document.getElementById('score-box');
+    box.style.display = 'block';
+    setTimeout(() => document.getElementById('score-input').focus(), 300);
+  }
+
+  // 送出成績 + 完成回報
   async function reportDone() {
-    const btn = document.getElementById('done-btn');
-    btn.disabled = true;
-    btn.textContent = '⏳ 回報中...';
+    const scoreVal = document.getElementById('score-input').value.trim();
+    const score    = scoreVal === '' ? '未填寫' : scoreVal;
+
+    // 驗證範圍
+    if (scoreVal !== '' && (isNaN(scoreVal) || +scoreVal < 0 || +scoreVal > 100)) {
+      const inp = document.getElementById('score-input');
+      inp.style.borderColor = '#f87171';
+      inp.focus();
+      return;
+    }
+
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ 送出中...';
 
     const now = new Date();
     const timeStr = now.toLocaleString('zh-TW', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit',
       hour12: false
     });
 
-    // Send to Google Sheet via GAS
+    // 傳送到 Google Sheet
     if (GAS_URL && GAS_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
       try {
         await fetch(GAS_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ class: cls, num, name, time: timeStr, task: '文章朗讀' })
+          body: JSON.stringify({
+            class: cls, num, name,
+            score,
+            time: timeStr,
+            task: '文章朗讀'
+          })
         });
       } catch(e) {
         console.warn('回報失敗', e);
       }
     }
 
-    // Show success
-    document.getElementById('success-box').style.display = 'block';
+    // 隱藏輸入區，顯示成功
+    document.getElementById('score-box').style.display = 'none';
+    const successBox = document.getElementById('success-box');
+    successBox.style.display = 'block';
+    document.getElementById('success-score').textContent =
+      scoreVal === '' ? '—' : scoreVal + ' 分';
     document.getElementById('success-time').textContent = `完成時間：${timeStr}`;
-    btn.textContent = '✅ 已完成回報';
   }
 </script>
 </body>
