@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>整班 QR Code 講義產生器</title>
+<title>台南市立白河國小 QR Code 講義產生器</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -266,26 +266,23 @@ textarea { resize:vertical; min-height:140px; line-height:1.8; }
 <div class="screen">
   <div class="header">
     <span class="icon">📋</span>
-    <h1>整班 QR Code 講義產生器</h1>
+    <h1>台南市立白河國小 QR Code 講義產生器</h1>
     <p>貼上名單 → 一鍵產生全班講義 → 直接列印</p>
   </div>
 
   <!-- Step 1: 基本設定 -->
   <div class="card" style="animation-delay:.05s">
     <div class="card-title">⚙️ 基本設定</div>
+    <input type="hidden" id="baseUrl" value="https://andyjunyi.github.io/jutor-qr/student.html" />
     <div class="form-row">
       <div class="form-group">
         <label>班級名稱</label>
         <input type="text" id="className" placeholder="例：5年甲班" />
       </div>
       <div class="form-group">
-        <label>學生頁網址</label>
-        <input type="text" id="baseUrl" placeholder="https://andyjunyi.github.io/jutor-qr/student.html" />
+        <label>學校／班級抬頭（列印頁頂端顯示）</label>
+        <input type="text" id="schoolName" placeholder="例：台南市立白河國小 5年甲班" />
       </div>
-    </div>
-    <div class="form-group">
-      <label>學校／班級抬頭（列印頁頂端顯示）</label>
-      <input type="text" id="schoolName" placeholder="例：大灣高中 5年甲班" />
     </div>
     <div class="form-group">
       <label>作業名稱（列印頁頂端右側）</label>
@@ -338,7 +335,7 @@ textarea { resize:vertical; min-height:140px; line-height:1.8; }
 <script>
 // 儲存上次設定
 window.addEventListener('load', () => {
-  ['baseUrl','className','schoolName','taskName'].forEach(id => {
+  ['className','schoolName','taskName'].forEach(id => {
     const saved = localStorage.getItem('bgen_'+id);
     if (saved) document.getElementById(id).value = saved;
   });
@@ -346,7 +343,7 @@ window.addEventListener('load', () => {
 
 async function generate() {
   // 儲存設定
-  ['baseUrl','className','schoolName','taskName'].forEach(id => {
+  ['className','schoolName','taskName'].forEach(id => {
     localStorage.setItem('bgen_'+id, document.getElementById(id).value);
   });
 
