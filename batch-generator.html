@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>整班 QR Code 講義產生器</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+/* ── 介面樣式 ── */
+:root {
+  --bg: #f0f4ff;
+  --card: #ffffff;
+  --primary: #4f46e5;
+  --primary-dark: #3730a3;
+  --primary-light: #818cf8;
+  --accent: #f59e0b;
+  --green: #10b981;
+  --text: #1e1b4b;
+  --muted: #6b7280;
+  --border: #e0e7ff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans TC', sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 32px 16px 80px;
+}
+@media print { body { padding:0; background:white; } }
+
+.screen { max-width: 700px; margin: 0 auto; }
+
+.header { text-align:center; margin-bottom:32px; animation: fadeDown .5s ease both; }
+.header .icon { font-size:48px; display:block; margin-bottom:8px; }
+.header h1 { font-size:24px; font-weight:900; color:var(--primary-dark); }
+.header p  { color:var(--muted); font-size:13px; margin-top:6px; }
+@keyframes fadeDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+
+.card {
+  background:var(--card); border-radius:20px; padding:28px;
+  box-shadow:0 4px 24px rgba(79,70,229,.08);
+  border:1px solid var(--border); margin-bottom:20px;
+  animation: fadeUp .5s ease both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+.card-title {
+  font-size:12px; font-weight:700; letter-spacing:2px;
+  text-transform:uppercase; color:var(--primary);
+  margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
+
+label { display:block; font-size:12px; font-weight:700; color:var(--muted); margin-bottom:6px; }
+input[type=text], textarea {
+  width:100%; padding:11px 14px; border-radius:10px;
+  border:1.5px solid var(--border); font-size:14px;
+  font-family:'Noto Sans TC',sans-serif; color:var(--text);
+  outline:none; transition:border .2s, box-shadow .2s;
+  background:white;
+}
+input[type=text]:focus, textarea:focus {
+  border-color:var(--primary-light);
+  box-shadow:0 0 0 3px rgba(129,140,248,.15);
+}
+textarea { resize:vertical; min-height:140px; line-height:1.8; }
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.form-group { margin-bottom:14px; }
+
+.roster-hint {
+  background:#f0f4ff; border-radius:8px; padding:10px 14px;
+  font-size:12px; color:var(--primary-dark); margin-bottom:12px; line-height:1.8;
+}
+.roster-hint code { background:white; padding:1px 6px; border-radius:4px; font-size:11px; }
+
+.btn {
+  width:100%; padding:15px; border-radius:14px; border:none;
+  font-size:16px; font-weight:900; cursor:pointer;
+  font-family:'Noto Sans TC',sans-serif;
+  transition:transform .15s, box-shadow .15s;
+}
+.btn-primary {
+  background:linear-gradient(135deg,var(--primary),var(--primary-light));
+  color:white; box-shadow:0 4px 16px rgba(79,70,229,.3);
+}
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(79,70,229,.4); }
+.btn-print {
+  background:linear-gradient(135deg,var(--green),#34d399);
+  color:white; box-shadow:0 4px 16px rgba(16,185,129,.3);
+}
+.btn-print:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(16,185,129,.4); }
+.btn:active { transform:scale(.98); }
+
+.preview-bar {
+  display:none; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:12px; margin-bottom:20px;
+}
+.preview-count {
+  background:var(--primary); color:white;
+  padding:6px 16px; border-radius:99px; font-size:13px; font-weight:700;
+}
+
+/* ── 進度條 ── */
+.progress-wrap { display:none; margin-bottom:20px; }
+.progress-bar-bg {
+  height:8px; background:var(--border); border-radius:99px; overflow:hidden;
+}
+.progress-bar-fill {
+  height:100%; background:linear-gradient(90deg,var(--primary),var(--primary-light));
+  border-radius:99px; transition:width .3s ease; width:0%;
+}
+.progress-text { font-size:12px; color:var(--muted); margin-top:6px; text-align:center; }
+
+/* ── 列印區 ── */
+#print-area { display:none; }
+
+/* ── A4 每頁樣式 ── */
+.page {
+  width:210mm; min-height:297mm;
+  background:white;
+  margin:0 auto 32px;
+  box-shadow:0 4px 32px rgba(0,0,0,.12);
+  position:relative;
+  overflow:hidden;
+  page-break-after:always;
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center;
+  padding:16mm 14mm;
+}
+@media print {
+  .screen, .preview-bar, .progress-wrap { display:none !important; }
+  #print-area { display:block !important; }
+  .page {
+    box-shadow:none; margin:0;
+    width:210mm; min-height:297mm;
+    padding:14mm 12mm;
+  }
+}
+
+/* 頂部裝飾條 */
+.page-top-bar {
+  position:absolute; top:0; left:0; right:0; height:14mm;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 14mm;
+}
+.page-top-bar .school-name {
+  font-size:11pt; font-weight:700; color:#4f46e5;
+  font-family:'Noto Sans TC',sans-serif;
+}
+.page-top-bar .task-label {
+  font-size:10pt; color:#6b7280;
+  font-family:'Noto Sans TC',sans-serif;
+}
+
+/* 底部裝飾條 */
+.page-bottom-bar {
+  position:absolute; bottom:0; left:0; right:0; height:12mm;
+  background:linear-gradient(135deg,#4f46e5,#818cf8);
+  display:flex; align-items:center; justify-content:center;
+}
+.page-bottom-bar .bottom-text {
+  color:white; font-size:9pt; font-weight:700; letter-spacing:2px;
+  font-family:'Noto Sans TC',sans-serif;
+}
+
+/* 學生名字區 */
+.student-name-block {
+  text-align:center; margin-bottom:8mm;
+}
+.student-name-block .name-label {
+  font-size:9pt; color:#94a3b8; font-weight:700;
+  letter-spacing:3px; text-transform:uppercase;
+  font-family:'Noto Sans TC',sans-serif;
+  margin-bottom:3mm;
+}
+.student-name-block .name-text {
+  font-family:'Noto Serif TC','Noto Sans TC',sans-serif;
+  font-size:42pt; font-weight:900; color:#1e1b4b;
+  line-height:1; letter-spacing:4px;
+}
+.student-name-block .info-chips {
+  display:flex; gap:8px; justify-content:center; margin-top:4mm;
+}
+.student-name-block .chip {
+  background:#f0f4ff; border:1.5px solid #c7d2fe;
+  color:#4f46e5; border-radius:99px;
+  padding:3px 14px; font-size:11pt; font-weight:700;
+  font-family:'Noto Sans TC',sans-serif;
+}
+
+/* QR Code 區 */
+.qr-section {
+  display:flex; flex-direction:column; align-items:center;
+  margin-bottom:8mm;
+}
+.qr-wrapper {
+  border:3px solid #e0e7ff; border-radius:16px; padding:6mm;
+  background:white; box-shadow:0 4px 20px rgba(79,70,229,.10);
+  margin-bottom:4mm;
+}
+.qr-scan-hint {
+  font-size:10pt; color:#6b7280; font-weight:700;
+  letter-spacing:1px; font-family:'Noto Sans TC',sans-serif;
+  display:flex; align-items:center; gap:6px;
+}
+.qr-scan-hint::before, .qr-scan-hint::after {
+  content:''; display:block; height:1px; width:20mm; background:#e0e7ff;
+}
+
+/* 步驟說明 */
+.steps-section {
+  width:100%; background:#f8faff;
+  border:1.5px solid #e0e7ff; border-radius:12px;
+  padding:5mm 7mm; margin-bottom:6mm;
+}
+.steps-title {
+  font-size:10pt; font-weight:900; color:#4f46e5;
+  font-family:'Noto Sans TC',sans-serif;
+  margin-bottom:3mm; display:flex; align-items:center; gap:4px;
+}
+.step-row {
+  display:flex; align-items:flex-start; gap:8px; margin-bottom:2.5mm;
+}
+.step-num {
+  width:18px; height:18px; border-radius:50%;
+  background:#4f46e5; color:white;
+  font-size:8pt; font-weight:900;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; margin-top:1px;
+  font-family:'Noto Sans TC',sans-serif;
+}
+.step-text {
+  font-size:10pt; color:#374151; line-height:1.6;
+  font-family:'Noto Sans TC',sans-serif;
+}
+
+/* 老師作業說明 */
+.homework-section {
+  width:100%; background:#fffbeb;
+  border:1.5px solid #fde68a; border-radius:12px;
+  padding:4mm 7mm;
+}
+.homework-title {
+  font-size:9pt; font-weight:900; color:#b45309;
+  font-family:'Noto Sans TC',sans-serif;
+  margin-bottom:2mm; display:flex; align-items:center; gap:4px;
+}
+.homework-text {
+  font-size:10pt; color:#92400e; line-height:1.8;
+  font-family:'Noto Sans TC',sans-serif; white-space:pre-wrap;
+}
+
+/* 頁碼 */
+.page-num {
+  position:absolute; bottom:14mm; right:14mm;
+  font-size:8pt; color:#9ca3af;
+  font-family:'Noto Sans TC',sans-serif;
+}
+</style>
+</head>
+<body>
+
+<!-- ── 設定介面 ── -->
+<div class="screen">
+  <div class="header">
+    <span class="icon">📋</span>
+    <h1>整班 QR Code 講義產生器</h1>
+    <p>貼上名單 → 一鍵產生全班講義 → 直接列印</p>
+  </div>
+
+  <!-- Step 1: 基本設定 -->
+  <div class="card" style="animation-delay:.05s">
+    <div class="card-title">⚙️ 基本設定</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>班級名稱</label>
+        <input type="text" id="className" placeholder="例：5年甲班" />
+      </div>
+      <div class="form-group">
+        <label>學生頁網址</label>
+        <input type="text" id="baseUrl" placeholder="https://andyjunyi.github.io/jutor-qr/student.html" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>學校／班級抬頭（列印頁頂端顯示）</label>
+      <input type="text" id="schoolName" placeholder="例：大灣高中 5年甲班" />
+    </div>
+    <div class="form-group">
+      <label>作業名稱（列印頁頂端右側）</label>
+      <input type="text" id="taskName" placeholder="例：Jutor 文章朗讀練習" value="Jutor 文章朗讀練習" />
+    </div>
+  </div>
+
+  <!-- Step 2: 名單 -->
+  <div class="card" style="animation-delay:.1s">
+    <div class="card-title">👥 步驟一：貼上學生名單</div>
+    <div class="roster-hint">
+      每行一位學生，格式：<code>座號 姓名</code>（空格或 Tab 分隔）<br>
+      例：<code>1 王小明</code>、<code>2 李小華</code>、<code>10 Andy</code>
+    </div>
+    <div class="form-group">
+      <label>名單（直接從 Excel 複製貼上也可以）</label>
+      <textarea id="roster" placeholder="1 王小明&#10;2 李小華&#10;3 張小美&#10;4 陳大偉&#10;5 林小玲"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 3: 作業說明 -->
+  <div class="card" style="animation-delay:.15s">
+    <div class="card-title">📝 步驟二：自訂作業說明</div>
+    <div class="form-group">
+      <label>老師給學生的作業說明（會印在每張講義上）</label>
+      <textarea id="homework" style="min-height:100px" placeholder="例：請用手機掃描上方 QR Code，完成一篇文章朗讀練習，並將最佳成績記錄下來。完成後點「我完成了」回報老師。">請用手機掃描上方 QR Code，開啟 Jutor 文章朗讀練習。
+完成後點「✅ 我完成了」，輸入你的最佳成績回報老師。</textarea>
+    </div>
+  </div>
+
+  <!-- 產生按鈕 -->
+  <button class="btn btn-primary" onclick="generate()">🚀 產生全班講義</button>
+
+  <!-- 進度條 -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    <div class="progress-text" id="progress-text">準備中...</div>
+  </div>
+
+  <!-- 預覽 / 列印按鈕 -->
+  <div class="preview-bar" id="preview-bar">
+    <span class="preview-count" id="preview-count"></span>
+    <button class="btn btn-print" style="width:auto;padding:12px 28px" onclick="window.print()">🖨️ 列印 / 儲存PDF</button>
+  </div>
+</div>
+
+<!-- ── 列印區（隱藏，列印時顯示）── -->
+<div id="print-area"></div>
+
+<script>
+// 儲存上次設定
+window.addEventListener('load', () => {
+  ['baseUrl','className','schoolName','taskName'].forEach(id => {
+    const saved = localStorage.getItem('bgen_'+id);
+    if (saved) document.getElementById(id).value = saved;
+  });
+});
+
+async function generate() {
+  // 儲存設定
+  ['baseUrl','className','schoolName','taskName'].forEach(id => {
+    localStorage.setItem('bgen_'+id, document.getElementById(id).value);
+  });
+
+  const baseUrl    = document.getElementById('baseUrl').value.trim();
+  const className  = document.getElementById('className').value.trim();
+  const schoolName = document.getElementById('schoolName').value.trim();
+  const taskName   = document.getElementById('taskName').value.trim();
+  const rosterRaw  = document.getElementById('roster').value.trim();
+  const homework   = document.getElementById('homework').value.trim();
+
+  if (!baseUrl)   return alert('請填寫學生頁網址！');
+  if (!className) return alert('請填寫班級名稱！');
+  if (!rosterRaw) return alert('請貼上學生名單！');
+
+  // 解析名單
+  const students = [];
+  rosterRaw.split('\n').forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    // 支援：「1 王小明」「1\t王小明」「01 王小明」
+    const m = line.match(/^(\d+)\s+(.+)$/);
+    if (m) students.push({ num: m[1], name: m[2].trim() });
+  });
+
+  if (students.length === 0) return alert('名單格式不對，請確認每行格式為「座號 姓名」');
+
+  // 顯示進度
+  const pw = document.getElementById('progress-wrap');
+  const pf = document.getElementById('progress-fill');
+  const pt = document.getElementById('progress-text');
+  pw.style.display = 'block';
+  document.getElementById('preview-bar').style.display = 'none';
+
+  const printArea = document.getElementById('print-area');
+  printArea.innerHTML = '';
+  printArea.style.display = 'block';
+
+  // 步驟說明內容
+  const stepsHtml = `
+    <div class="step-row"><div class="step-num">1</div><div class="step-text">用手機或平板掃描下方 QR Code</div></div>
+    <div class="step-row"><div class="step-num">2</div><div class="step-text">確認畫面上出現你的名字後，點「🚀 開始朗讀練習」</div></div>
+    <div class="step-row"><div class="step-num">3</div><div class="step-text">完成練習後，回到本頁點「✅ 我完成了！」</div></div>
+    <div class="step-row"><div class="step-num">4</div><div class="step-text">輸入你的最佳成績，按「送出 🎯」</div></div>
+  `;
+
+  for (let i = 0; i < students.length; i++) {
+    const s = students[i];
+    pf.style.width = ((i+1)/students.length*100) + '%';
+    pt.textContent = `產生中 ${i+1} / ${students.length}：${s.name}`;
+
+    const url = `${baseUrl}?class=${encodeURIComponent(className)}&num=${encodeURIComponent(s.num)}&name=${encodeURIComponent(s.name)}`;
+
+    // 建立頁面 DOM
+    const page = document.createElement('div');
+    page.className = 'page';
+    page.innerHTML = `
+      <div class="page-top-bar">
+        <span class="school-name">${schoolName || className}</span>
+        <span class="task-label">${taskName}</span>
+      </div>
+
+      <div class="student-name-block">
+        <div class="name-label">學生姓名</div>
+        <div class="name-text">${s.name}</div>
+        <div class="info-chips">
+          <span class="chip">🏫 ${className}</span>
+          <span class="chip"># ${s.num} 號</span>
+        </div>
+      </div>
+
+      <div class="qr-section">
+        <div class="qr-wrapper">
+          <div id="qr-${i}"></div>
+        </div>
+        <div class="qr-scan-hint">掃描 QR Code 開始練習</div>
+      </div>
+
+      <div class="steps-section">
+        <div class="steps-title">📱 使用步驟</div>
+        ${stepsHtml}
+      </div>
+
+      ${homework ? `
+      <div class="homework-section" style="margin-top:5mm">
+        <div class="homework-title">📌 老師的話</div>
+        <div class="homework-text">${homework}</div>
+      </div>` : ''}
+
+      <div class="page-bottom-bar">
+        <span class="bottom-text">🎤 JUTOR AI 文章朗讀練習</span>
+      </div>
+
+      <div class="page-num">${i+1} / ${students.length}</div>
+    `;
+
+    printArea.appendChild(page);
+
+    // 產生 QR Code（需等 DOM 加入後）
+    await new Promise(resolve => {
+      setTimeout(() => {
+        new QRCode(document.getElementById(`qr-${i}`), {
+          text: url,
+          width: 200, height: 200,
+          colorDark: '#3730a3',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+        resolve();
+      }, 30);
+    });
+  }
+
+  // 完成
+  pf.style.width = '100%';
+  pt.textContent = `✅ 完成！共 ${students.length} 張講義`;
+
+  const pb = document.getElementById('preview-bar');
+  pb.style.display = 'flex';
+  document.getElementById('preview-count').textContent = `共 ${students.length} 張講義已產生`;
+
+  // 捲到預覽
+  setTimeout(() => printArea.scrollIntoView({ behavior:'smooth', block:'start' }), 300);
+}
+</script>
+</body>
+</html>
